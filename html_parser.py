@@ -1,4 +1,21 @@
 import requests
+import json
+# from tqdm import tqdm
+# TODO progress bar
+
+def isbn_info(isbn: str):
+	# returns books title for given isbn
+	url = 'https://openlibrary.org/search.json?isbn='
+
+	try:
+		response = requests.get(url + isbn)
+		response.raise_for_status()  # Raise an exception for bad status codes
+		book_info = response.json()
+		book_title = book_info["docs"][0]["title"]
+		return book_title
+	except requests.exceptions.RequestException as error:
+		print(f'Error downloading HTML: {error}')
+		return None
 
 
 def download_anna_html(isbn: str):
@@ -39,7 +56,7 @@ def parse_anna_hashes(hashes: list):
 	libgen_hashes = []
 	libraryLOL_hashes = []
 	file_type = ''
-	file_extensions = ['.mobi', '.epub', '.pdf', '.lit', '.azw3', '.txt']
+	file_extensions = ['.mobi', '.epub', '.pdf', '.lit', '.azw3', '.txt', '.cbz']
 	libgen = 'http://libgen.li/ads.php?md5='
 	libraryLOL = 'http://library.lol'
 
@@ -56,7 +73,6 @@ def parse_anna_hashes(hashes: list):
 		# detecting download options
 		if (libgen + hsh) in html_content:
 			libgen_hashes.append(hsh)
-			print('libgen')
 		elif libraryLOL in html_content:
 			libraryLOL_hashes.append(hsh)
 		else:
@@ -99,15 +115,15 @@ def parse_libgen_html(html_content: str):
 	return key
 
 
-def download_libgen_book(hsh, key, file_type):
+def download_libgen_book(book_title, file_type, hsh, key):
 	url = 'http://libgen.li/get.php?md5=' + hsh + '&key=' + key
 	print(url)
 	headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'}
-	response = requests.get(url, headers=headers)
+	response = requests.get(url, stream=True, headers=headers)
 
 	if response.status_code == 200:
 		print('connected')
-		with open('book' + file_type, 'wb') as file:
+		with open(book_title + file_type, 'wb') as file:
 			file.write(response.content)
 		print('File downloaded successfully')
 	else:
@@ -115,7 +131,7 @@ def download_libgen_book(hsh, key, file_type):
 
 
 # def download_libraryLOL_html:
-
+		#TODO detect if fiction, fiction is fiction, nonfiction is main
 
 # def parse_libraryLOL_html:
 
@@ -123,16 +139,22 @@ def download_libgen_book(hsh, key, file_type):
 
 # ISBN = input("please enter the ISBN13 : ")
 # print(f'entered {ISBN})
-# ISBN = '9780590353427'
-ISBN = '9781538704431'
+ISBN = '9780767908184'
+BOOK_TITLE = isbn_info(ISBN)
+#TODO, ask user if book title is correct, reprompt isbn if not
+print(f'attempting to download : {BOOK_TITLE}')
 ANNA_HTML = download_anna_html(ISBN)
 HASHES = parse_anna_html(ANNA_HTML)
-provider, VALID_HASH, FILE_TYPE = parse_anna_hashes(HASHES)
-print(provider, VALID_HASH, FILE_TYPE)
-if provider == 'libgen':
+PROVIDER, VALID_HASH, FILE_TYPE = parse_anna_hashes(HASHES)
+print(PROVIDER, VALID_HASH, FILE_TYPE)
+
+if PROVIDER == 'libgen':
 	LIBGEN_HTML = download_libgen_html(VALID_HASH)
 	KEY = parse_libgen_html(LIBGEN_HTML)
-	download_libgen_book(VALID_HASH, KEY, FILE_TYPE)
-# elif provider == 'libraryLOL':
-elif provider == 'None':
+	download_libgen_book(BOOK_TITLE, FILE_TYPE, VALID_HASH, KEY)
+
+elif PROVIDER == 'libraryLOL':
+	print('Library LOL')
+
+else:
 	print('no provider found')
