@@ -3,6 +3,7 @@ import json
 # from tqdm import tqdm
 # TODO progress bar
 
+
 def isbn_info(isbn: str):
 	# returns books title for given isbn
 	url = 'https://openlibrary.org/search.json?isbn='
@@ -131,30 +132,6 @@ def download_libgen_book(book_title, file_type, hsh, key):
 
 
 # def download_libraryLOL_html:
-		#TODO detect if fiction, fiction is fiction, nonfiction is main
+# TODO detect if fiction, fiction is fiction, nonfiction is main
 
 # def parse_libraryLOL_html:
-
-
-
-# ISBN = input("please enter the ISBN13 : ")
-# print(f'entered {ISBN})
-ISBN = '9780767908184'
-BOOK_TITLE = isbn_info(ISBN)
-#TODO, ask user if book title is correct, reprompt isbn if not
-print(f'attempting to download : {BOOK_TITLE}')
-ANNA_HTML = download_anna_html(ISBN)
-HASHES = parse_anna_html(ANNA_HTML)
-PROVIDER, VALID_HASH, FILE_TYPE = parse_anna_hashes(HASHES)
-print(PROVIDER, VALID_HASH, FILE_TYPE)
-
-if PROVIDER == 'libgen':
-	LIBGEN_HTML = download_libgen_html(VALID_HASH)
-	KEY = parse_libgen_html(LIBGEN_HTML)
-	download_libgen_book(BOOK_TITLE, FILE_TYPE, VALID_HASH, KEY)
-
-elif PROVIDER == 'libraryLOL':
-	print('Library LOL')
-
-else:
-	print('no provider found')
