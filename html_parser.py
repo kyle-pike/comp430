@@ -2,7 +2,12 @@ import requests
 
 
 def download_anna_html(isbn: str):
-	url = 'https://annas-archive.org/search?q="isbn13:'
+	# detect if user entered ISBN 10 or 13
+	if len(isbn) == 13:
+		url = 'https://annas-archive.org/search?q="isbn13:'
+	else:
+		url = 'https://annas-archive.org/search?q="isbn10:'
+
 	try:
 		response = requests.get(url + isbn)
 		response.raise_for_status()  # Raise an exception for bad status codes
@@ -15,22 +20,60 @@ def download_anna_html(isbn: str):
 def parse_anna_html(html_content: str):
 	hashes = []
 	hash_id = 'href="/md5/'
-	html_content_list = html_content.split()
+	html_content_strings = html_content.split()
 
 	# filter through strings to obtain md5 file hashes
-	for strings in html_content_list:
-		if hash_id in strings:
-			strings = strings.split(hash_id)
-			strings = strings[-1]
-			strings = strings.split('"')
-			strings = strings[0]
-			hashes.append(strings)
-	return hashes[0]
+	for string in html_content_strings:
+		if hash_id in string:
+			string = string.split(hash_id)
+			string = string[-1]
+			string = string.split('"')
+			string = string[0]
+			hashes.append(string)
+	hashes = hashes[:10] # limit to 10 file hashes
+
+	return hashes
+
+
+def parse_anna_hashes(hashes: list):
+	libgen_hashes = []
+	libraryLOL_hashes = []
+	file_type = ''
+	file_extensions = ['.mobi', '.epub', '.pdf', '.lit', '.azw3', '.txt']
+	libgen = 'http://libgen.li/ads.php?md5='
+	libraryLOL = 'http://library.lol'
+
+	for hsh in hashes:
+		# download the html file for the file hash
+
+		response = requests.get('https://annas-archive.org/md5/' + hsh)
+		html_content = response.text
+
+		for file_extension in file_extensions:
+			if file_extension in html_content:
+				file_type = file_extension
+
+		# detecting download options
+		if (libgen + hsh) in html_content:
+			libgen_hashes.append(hsh)
+			print('libgen')
+		elif libraryLOL in html_content:
+			libraryLOL_hashes.append(hsh)
+		else:
+			print(f'no download options available for hash : {hsh}')
+
+		# provide the first file hash with a download option
+		if hsh in libgen_hashes:
+			return 'libgen', hsh, file_type
+		elif hsh in libraryLOL_hashes:
+			return 'libraryLOL', hsh, file_type
+
+	return 'None', 'None', 'None'
 
 
 def download_libgen_html(hsh: str):
 	url = 'http://libgen.li/ads.php?md5='
-	# for hsh in hashes:
+
 	try:
 		response = requests.get(url + hsh)
 		response.raise_for_status()
@@ -56,7 +99,7 @@ def parse_libgen_html(html_content: str):
 	return key
 
 
-def book_libgen(hsh, key):
+def download_libgen_book(hsh, key, file_type):
 	url = 'http://libgen.li/get.php?md5=' + hsh + '&key=' + key
 	print(url)
 	headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'}
@@ -64,19 +107,32 @@ def book_libgen(hsh, key):
 
 	if response.status_code == 200:
 		print('connected')
-		with open('book.epub', 'wb') as file:
+		with open('book' + file_type, 'wb') as file:
 			file.write(response.content)
 		print('File downloaded successfully')
 	else:
 		print('Failed to download file:', response.status_code)
 
 
-# ISBN = input("please enter ISBN13")
-# print(ISBN)
-# print(type(ISBN))
-ANNA_HTML = download_anna_html('9780786838653')
+# def download_libraryLOL_html:
+
+
+# def parse_libraryLOL_html:
+
+
+
+# ISBN = input("please enter the ISBN13 : ")
+# print(f'entered {ISBN})
+# ISBN = '9780590353427'
+ISBN = '9781538704431'
+ANNA_HTML = download_anna_html(ISBN)
 HASHES = parse_anna_html(ANNA_HTML)
-print(HASHES)
-LIBGEN_HTML = download_libgen_html(HASHES)
-KEY = parse_libgen_html(LIBGEN_HTML)
-book_libgen(HASHES, KEY)
+provider, VALID_HASH, FILE_TYPE = parse_anna_hashes(HASHES)
+print(provider, VALID_HASH, FILE_TYPE)
+if provider == 'libgen':
+	LIBGEN_HTML = download_libgen_html(VALID_HASH)
+	KEY = parse_libgen_html(LIBGEN_HTML)
+	download_libgen_book(VALID_HASH, KEY, FILE_TYPE)
+# elif provider == 'libraryLOL':
+elif provider == 'None':
+	print('no provider found')
