@@ -1,21 +1,29 @@
 import requests
-import json
 # from tqdm import tqdm
 # TODO progress bar
 
 
 def isbn_info(isbn: str):
 	# returns books title for given isbn
-	url = 'https://openlibrary.org/search.json?isbn='
+	book_title = ''
+	url = 'http://openlibrary.org/api/volumes/brief/isbn/'
 
 	try:
-		response = requests.get(url + isbn)
+		response = requests.get(url + isbn + '.json')
 		response.raise_for_status()  # Raise an exception for bad status codes
 		book_info = response.json()
-		book_title = book_info["docs"][0]["title"]
-		return book_title
+
+		# filter through API's JSON data to obtain book title
+		book_dict = book_info['records']
+		for key, value in book_dict.items():
+			book_dict = value['data']
+			for key, value in book_dict.items():
+				if key == 'title':
+					book_title = value
+					return book_title
+
 	except requests.exceptions.RequestException as error:
-		print(f'Error downloading HTML: {error}')
+		print(f'Error connecting to openlibrary.org : {error}')
 		return None
 
 
@@ -31,7 +39,7 @@ def download_anna_html(isbn: str):
 		response.raise_for_status()  # Raise an exception for bad status codes
 		return response.text  # Return the HTML content
 	except requests.exceptions.RequestException as error:
-		print(f'Error downloading HTML: {error}')
+		print(f'Error connecting to annas-archive.org : {error}')
 		return None
 
 
@@ -48,7 +56,7 @@ def parse_anna_html(html_content: str):
 			string = string.split('"')
 			string = string[0]
 			hashes.append(string)
-	hashes = hashes[:10] # limit to 10 file hashes
+	hashes = hashes[:25] # limit to 25 file hashes
 
 	return hashes
 
@@ -62,16 +70,16 @@ def parse_anna_hashes(hashes: list):
 	libraryLOL = 'http://library.lol'
 
 	for hsh in hashes:
-		# download the html file for the file hash
-
+		# download the html file
 		response = requests.get('https://annas-archive.org/md5/' + hsh)
 		html_content = response.text
 
+		# obtain the file extension
 		for file_extension in file_extensions:
 			if file_extension in html_content:
 				file_type = file_extension
 
-		# detecting download options
+		# see if a download is available
 		if (libgen + hsh) in html_content:
 			libgen_hashes.append(hsh)
 		elif libraryLOL in html_content:
@@ -81,11 +89,14 @@ def parse_anna_hashes(hashes: list):
 
 		# provide the first file hash with a download option
 		if hsh in libgen_hashes:
+			print('libgen', hsh, file_type)
 			return 'libgen', hsh, file_type
+
 		elif hsh in libraryLOL_hashes:
+			print('libraryLOL', hsh, file_type)
 			return 'libraryLOL', hsh, file_type
 
-	return 'None', 'None', 'None'
+	return None, None, None
 
 
 def download_libgen_html(hsh: str):
@@ -96,7 +107,7 @@ def download_libgen_html(hsh: str):
 		response.raise_for_status()
 		return response.text
 	except requests.exceptions.RequestException as error:
-		print(f'Error downloading HTML: {error}')
+		print(f'Error connecting to libgen.li : {error}')
 		return None
 
 
@@ -120,18 +131,72 @@ def download_libgen_book(book_title, file_type, hsh, key):
 	url = 'http://libgen.li/get.php?md5=' + hsh + '&key=' + key
 	print(url)
 	headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'}
-	response = requests.get(url, stream=True, headers=headers)
 
-	if response.status_code == 200:
-		print('connected')
-		with open(book_title + file_type, 'wb') as file:
-			file.write(response.content)
-		print('File downloaded successfully')
-	else:
-		print('Failed to download file:', response.status_code)
+	try:
+		response = requests.get(url, stream=True, headers=headers)
+		response.raise_for_status()  # Raise an exception for bad status codes
+
+		if response.status_code == 200:
+			print('connected')
+
+			with open(book_title + file_type, 'wb') as file:
+				file.write(response.content)
+			print(f'{book_title} downloaded')
+
+		else:
+			print(f'Failed to download from libgen : {response.status_code}')
+
+	except requests.exceptions.RequestException as error:
+		print(f'Error connecting to libgen : {error}')
 
 
-# def download_libraryLOL_html:
-# TODO detect if fiction, fiction is fiction, nonfiction is main
+def download_libraryLOL_html(hsh):
+	response = requests.get('https://annas-archive.org/md5/' + hsh)
+	html_content = response.text
+	html_content_lines = html_content.split('\n')
+	libraryLOL = '<a href="http://library.lol/'
+	download_url = ''
 
-# def parse_libraryLOL_html:
+	# filter to obtain download link
+	for line in html_content_lines:
+		if libraryLOL in line:
+			line = line.split()
+			line = line[1]
+			line = line.split('"')
+			download_url = line[1]
+
+	try:
+		response = requests.get(download_url)
+		response.raise_for_status()
+		return response.text
+	except requests.exceptions.RequestException as error:
+		print(f'Error connecting to library.lol : {error}')
+		return None
+
+
+def download_libraryLOL_book(book_title, file_type, html_content):
+	url = ''
+
+	# filter through strings to obtain download link
+	for line in html_content.split('\n'):
+		if 'https://download.library.lol/' in line:
+			line = line.split('"')
+			url = line[1]
+
+	# attempt to download book
+	try:
+		response = requests.get(url, stream=True)
+		response.raise_for_status()  # Raise an exception for bad status codes
+
+		if response.status_code == 200:
+			print('connected')
+
+			with open(book_title + file_type, 'wb') as file:
+				file.write(response.content)
+			print(f'{book_title} downloaded')
+
+		else:
+			print(f'Failed to download from library.lol : {response.status_code}')
+
+	except requests.exceptions.RequestException as error:
+		print(f'Error connecting to library.lol : {error}')

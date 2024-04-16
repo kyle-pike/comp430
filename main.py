@@ -3,8 +3,8 @@ from book_downloader import *
 
 def main():
 
-	# ISBN = input("please enter the ISBN13 : ")
-	isbn = '9780767908184'
+	# isbn = input("please enter the ISBN13 : ")
+	isbn = '9781649374042'
 	book_title = isbn_info(isbn)
 	# TODO, ask user if book title is correct, reprompt isbn if not
 	print(f'attempting to download : {book_title}')
@@ -19,7 +19,8 @@ def main():
 		download_libgen_book(book_title, file_type, valid_hash, key)
 
 	elif provider == 'libraryLOL':
-		print('Library LOL')
+		libraryLOL_html = download_libraryLOL_html(valid_hash)
+		download_libraryLOL_book(book_title, file_type, libraryLOL_html)
 
 	else:
 		print('no provider found')
