@@ -1,3 +1,11 @@
+'''
+Downloads books from libgen.li and library.lol
+----------------------------------------------
+1) enter ISBN
+2) with ISBN, parses through annas-archive.org for available downloads
+3) finds and downloads the book
+'''
+
 import requests
 # from tqdm import tqdm
 # TODO progress bar
@@ -89,11 +97,9 @@ def parse_anna_hashes(hashes: list):
 
 		# provide the first file hash with a download option
 		if hsh in libgen_hashes:
-			print('libgen', hsh, file_type)
 			return 'libgen', hsh, file_type
 
 		elif hsh in libraryLOL_hashes:
-			print('libraryLOL', hsh, file_type)
 			return 'libraryLOL', hsh, file_type
 
 	return None, None, None
@@ -129,7 +135,7 @@ def parse_libgen_html(html_content: str):
 
 def download_libgen_book(book_title, file_type, hsh, key):
 	url = 'http://libgen.li/get.php?md5=' + hsh + '&key=' + key
-	print(url)
+	print(f'download url : {url}')
 	headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'}
 
 	try:
@@ -137,7 +143,7 @@ def download_libgen_book(book_title, file_type, hsh, key):
 		response.raise_for_status()  # Raise an exception for bad status codes
 
 		if response.status_code == 200:
-			print('connected')
+			print(f'connected to url')
 
 			with open(book_title + file_type, 'wb') as file:
 				file.write(response.content)
@@ -183,13 +189,15 @@ def download_libraryLOL_book(book_title, file_type, html_content):
 			line = line.split('"')
 			url = line[1]
 
+	print(f'download url : {url}')
+
 	# attempt to download book
 	try:
 		response = requests.get(url, stream=True)
 		response.raise_for_status()  # Raise an exception for bad status codes
 
 		if response.status_code == 200:
-			print('connected')
+			print('connected to url')
 
 			with open(book_title + file_type, 'wb') as file:
 				file.write(response.content)
