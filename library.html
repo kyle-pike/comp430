@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="imgs/book.png" rel="icon" type="image/x-icon"/>
+<link href="https://use.fontawesome.com/releases/v6.4.2/css/all.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css?family=Abel" rel="stylesheet"/>
+<title>Pikes Place Library</title>
+<style>
+        /* color pallet : Dark Moss Green; #515B3A - Sage; #BABF95 
+        YlnMn Blue; #444B6E - Cool Gray; #A4A8D1 - Redwood; #B2675E */
+
+        body {
+            background-color: floralwhite;
+            margin: 0;
+            body: 0;
+        }
+
+        h1 {
+            font-family: Abel;
+            text-align: center;
+            color: #444B6E;
+        }
+
+        h3 {
+            font-family: Abel;
+            text-align: center;
+            position: fixed; top:50px; right: 30%; left: 30%;
+            color: #444B6E;
+        }
+
+        ul {
+            list-style-type: none;
+            /*display: inline-block;*/
+            margin: center;
+            margin-top: 120px;
+            color: #444B6E;
+            font-family: Abel;
+            -webkit-column-count: 2;
+            -moz-column-count: 2;
+            -o-column-count: 2;
+            column-count: 2;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            padding-right: 40px;
+            padding-bottom: 10px;
+        }
+
+        a:link {
+            text-decoration: none;
+            color: #444B6E;
+        }
+
+        a:visited {
+            color: #444B6E;
+        }
+
+        a:hover {
+            color: #a0a6c5;
+        }
+
+        #myBtn {
+          background-color: transparent; /* transparent background */
+          border: none;
+          color: #444B6E;
+          padding: 12px 16px;
+          font-size: 16px;
+          cursor: pointer;
+          position: fixed; top: 0px; right: 0px;
+        }
+
+        #myBtn:hover {
+            color: #A4A8D1; /* Add a dark-grey icon color on hover */
+        }
+
+        .title {
+            position: fixed; top:0px; right: 30%; left: 30%;
+            background-color: #a0a6c5;
+            border-radius: 10px;
+        }
+        /* just a test to make sure the button works */
+        h4 {
+          margin-top: 1000px;
+        }
+    </style>
+</head>
+<body>
+<!-- creates a cliackable button that is the house icon -->
+<button id="myBtn" onclick="topFunction()" title="Go to top"><i class="fa fa-house"></i></button>
+<h1 class="title">Pike's Place Library</h1>
+<h3> Downloadable Books:</h3>
+<ul id="books">
+</ul>
+<script>
+    // Get the button:
+    let mybutton = document.getElementById("myBtn");
+
+    function scrollFunction() {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            mybutton.style.display = "block";
+        } else {
+            mybutton.style.display = "none";
+        }
+    }
+
+    // When the user clicks on the button, scroll to the top of the document
+    function topFunction() {
+        document.body.scrollTop = 0; // For Safari
+        document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+    }
+</script>
+</body>
+</html>
