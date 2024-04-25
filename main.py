@@ -17,16 +17,19 @@ def main():
 		found available download / did not find available download
 		downloading (progress bar)
 
-		for book in books:
-			download_book(book)
-
 	6) LCD : finished, please obtain books via $URL
 	7) LCD : return to start?
 	restarts process
 	'''
 
+	# while inputting is True:
+
+	books = {}
+
+	# for isbn, book_title in books:
 	isbn = '9780813054964'
-	book_title = isbn_info(isbn)
+	book_title, book_cover_url = isbn_info(isbn)
+	download_book_cover(book_title, book_cover_url)
 	print(f'attempting to download : {book_title}')
 	download_book(isbn, book_title)
 

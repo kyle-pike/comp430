@@ -12,7 +12,7 @@ import requests
 
 
 def isbn_info(isbn: str):
-	# returns books title for given isbn
+	# returns books title for given isbn and cover image (binary)
 	book_title = ''
 	url = 'http://openlibrary.org/api/volumes/brief/isbn/'
 
@@ -28,11 +28,38 @@ def isbn_info(isbn: str):
 			for key, value in book_dict.items():
 				if key == 'title':
 					book_title = value
-					return book_title
+
+			# filter through JSON to obtain book cover url
+			for key, value in book_dict.items():
+				if key == 'cover':
+					for key, value in value.items():
+						if key == 'large':
+							book_cover_url = value
+
+		return book_title, book_cover_url
 
 	except requests.exceptions.RequestException as error:
 		print(f'Error connecting to openlibrary.org : {error}')
 		return None
+
+
+def download_book_cover(book_title, book_cover_url):
+	try:
+		response = requests.get(book_cover_url, stream=True)
+		response.raise_for_status()  # Raise an exception for bad status codes
+
+		if response.status_code == 200:
+			print(f'connected to url')
+
+			with open(book_title + '.jpg', 'wb') as file:
+				file.write(response.content)
+			print(f'{book_title} downloaded')
+
+		else:
+			print(f'Failed to download book cover : {response.status_code}')
+
+	except requests.exceptions.RequestException as error:
+		print(f'Error connecting to {book_cover_url} : {error}')
 
 
 def download_anna_html(isbn: str):
