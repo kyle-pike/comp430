@@ -3,7 +3,6 @@ from book_downloader import *
 # from input import *
 
 def main():
-
 	'''
 	----- PROCESS -----
 	1) LCD : enter ISBN
@@ -24,10 +23,10 @@ def main():
 
 	# while inputting is True:
 
-	books = {}
+	# isbns = []
+	# for isbn in isbns:
 
-	# for isbn, book_title in books:
-	isbn = '9780813054964'
+	isbn = '9780670022700'
 	book_title, book_cover_url = isbn_info(isbn)
 	download_book_cover(book_title, book_cover_url)
 	print(f'attempting to download : {book_title}')

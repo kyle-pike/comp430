@@ -1,13 +1,6 @@
-# input(f'enter ISBN')
-
 # BARCODE SCANNER
 # from evdev import InputDevice, list_devices, categorize, ecodes
-#
-# # Replace 'eventX' with the correct event device path for your barcode scanner
-# dev = InputDevice('/dev/input/event2')
-#
-#
-#
+# dev = InputDevice('/dev/input/event0')
 # barcode = ''
 # for event in dev.read_loop():
 #     if event.type == ecodes.EV_KEY:
@@ -20,14 +13,14 @@
 #                 barcode += key_event.keycode[4:]
 
 
+
+
 # PIN PAD
 import RPi.GPIO as GPIO
 from time import sleep
-
 # Define the GPIO pins for the rows and columns of the keypad
 rows = [4, 17, 27, 5]  # Pins for the rows
-cols = [6, 26, 20, 16]  # Pins for the columns
-
+columns = [6, 26, 20, 16]  # Pins for the columns
 
 # Define the keys on the keypad
 keys = [
@@ -36,7 +29,7 @@ keys = [
     ['7', '8', '9', 'C'],
     ['*', '0', '#', 'D']
 ]
-
+#
 # Setup GPIO using BCM numbering
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -46,17 +39,17 @@ for row in rows:
     GPIO.output(row, GPIO.HIGH)
 
 # Setup columns as inputs with internal pull-up resistors
-for col in cols:
-    GPIO.setup(col, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+for column in columns:
+    GPIO.setup(column, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # Function to scan the keypad and return the pressed key
 def scan_keypad():
-    for i, row_pin in enumerate(rows):
+    for row_index, row_pin in enumerate(rows):
         # Set the current row pin to output low
         GPIO.output(row_pin, GPIO.LOW)
-        for j, col_pin in enumerate(cols):
-            if GPIO.input(col_pin) == GPIO.LOW:
-                return keys[i][j]
+        for column_index, column_pin in enumerate(columns):
+            if GPIO.input(column_pin) == GPIO.LOW:
+                return keys[row_index][column_index]
         # Reset the current row pin to input high
         GPIO.output(row_pin, GPIO.HIGH)
     return None
