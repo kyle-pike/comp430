@@ -231,7 +231,7 @@ def parse_libgen_html(html_content: str):
 	return key
 
 
-def download_libgen_book(book_title, file_type, hsh, key):
+def download_libgen_book(book_title: str, file_type: str, hsh: str, key: str):
 	"""Downloads the book from libgen.li using the book's file hash and key.
 
 	book_title and file_type are required to properly name the download file.
@@ -268,7 +268,7 @@ def download_libgen_book(book_title, file_type, hsh, key):
 		print(f'Error connecting to libgen : {error}')
 
 
-def download_libraryLOL_html(hsh):
+def download_libraryLOL_html(hsh: str):
 	"""Downloads html file from library.lol for given book file hsh.
 
 	Args:
@@ -303,7 +303,7 @@ def download_libraryLOL_html(hsh):
 		return None
 
 
-def download_libraryLOL_book(book_title, file_type, html_content):
+def download_libraryLOL_book(book_title: str, file_type: str, html_content: str):
 	"""Downloads the book from library.lol.
 
 	book_title and file_type are required to properly name the download file.
@@ -345,7 +345,7 @@ def download_libraryLOL_book(book_title, file_type, html_content):
 		print(f'Error connecting to library.lol : {error}')
 
 
-def download_book(isbn, book_title):
+def download_book(book_title: str, isbn: str):
 	"""Combination of html downloading and parsing functions in this module to download a book.
 
 	Args:
