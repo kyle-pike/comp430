@@ -6,34 +6,39 @@ from display import *
 from input import *
 
 
+# pin setup for the keypad's rows and columns
+rows = [4, 17, 27, 5]
+columns = [6, 26, 20, 16]
+
 def main():
 
-	gpio_setup()
+	gpio_setup(rows, columns)
 
 	while True:
 		# STEP 1 - LCD prompts user to enter ISBN
 		lcd_init()
-		lcd_string('Enter ISBN', 0)
+		lcd_string('Enter ISBN', LCD_LINE_1)
 
 		# STEP 2 - user enters ISBN via keypad or scanner
-		keypad_output = keypad_input()
-		if keypad_output is None:
+		keypad_output = keypad_input(rows, columns)
+		time.sleep(3)
+		# if keypad_output is None:
 
 
 		# STEP 3 - LCD displays the entered ISBN and if they want to download another
-		lcd_init()
-		lcd_string(f'ISBN : {isbn}', 0)
-		lcd_string('Press * to stop inputting.', 1)
+		# lcd_init()
+		# lcd_string(f'ISBN : {isbn}', 0)
+		# lcd_string('Press * to stop inputting.', 1)
 
 		# STEP 4 - user inputs more ISBNs or presses * on keypad to finish
-		keypad_output = keypad_input()
-		if keypad_output is None:
-			print('done entering')
+		# keypad_output = keypad_input()
+		# if keypad_output is None:
+		# 	print('done entering')
 		# STEP 5 - begin downloading books, LCD displays active status ie progress bar
-		for isbn in isbns:
-			book_title, book_cover_url = isbn_info(isbn)
-			download_book_cover(book_title, book_cover_url)
-			download_book(book_title, isbn)
+		# for isbn in isbns:
+		# 	book_title, book_cover_url = isbn_info(isbn)
+		# 	download_book_cover(book_title, book_cover_url)
+		# 	download_book(book_title, isbn)
 		# STEP 6 - update html to include new books
 		# TODO : restart web server after
 		# STEP 7 - LCD provides url when finished downloading

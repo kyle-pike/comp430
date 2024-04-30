@@ -9,11 +9,9 @@ This is due to the linux kernel evdev module only detecting the scanner as a gen
 """
 import RPi.GPIO as GPIO
 from time import sleep
+from display import *
 import evdev
-import display
-# pin setup for the keypad's rows and columns
-rows = [4, 17, 27, 5]
-columns = [6, 26, 20, 16]
+
 
 def gpio_setup(rows: list, columns: list):
 	"""Configures row and column pins on GPIO.
@@ -77,9 +75,12 @@ def keypad_scan(rows: list, columns: list):
 
 
 # TODO : detect if keypad is disconnected
-# TODO : display active typing to LCD
-def keypad_input():
-	"""
+def keypad_input(rows: list, columns: list):
+	"""responds to keypad presses depending on key, and displays active status to LCD.
+	If pressed key is an integer, add to the list isbn.
+	If pressed key is 'D', "delete" the last integer from the list isbn.
+	If pressed key is '#', filter to ensure 10/13 characters then return the ISBN.
+	If pressed key is '*', stop immediately.
 
 	Returns:
 		isbn: 10 or 13 character string representing an ISBN
@@ -90,19 +91,27 @@ def keypad_input():
 
 		if type(key) is int:
 			isbn.append(str(key))
-			print(f'isbn : {isbn}')
+			formatted_isbn = ''.join(isbn)
+			lcd_string(f'{formatted_isbn}', LCD_LINE_1)
 
 		# 'D' is the delete key
 		elif key == 'D':
 			isbn.pop(-1)
-			print(f'isbn : {isbn}')
+			formatted_isbn = ''.join(isbn)
+			lcd_string(f'{formatted_isbn}', LCD_LINE_1)
 
 		# hashtag is the submit key
 		elif key == '#':
-			for number in isbn:
-				isbn = ''.join(isbn)
-			print(f'isbn : {isbn}')
-			return isbn
+
+			if len(isbn) >= 10:
+				for number in isbn:
+					formatted_isbn = ''.join(isbn)
+				lcd_string(f'submitted ISBN:', LCD_LINE_1)
+				lcd_string(f'{formatted_isbn}', LCD_LINE_2)
+				return formatted_isbn
+
+			elif len(isbn) < 10:
+				lcd_string(f'ISBNS are 10/13', LCD_LINE_1)
 
 		# '*' is the stop key
 		elif key == '*':
@@ -111,7 +120,7 @@ def keypad_input():
 		sleep(.3)
 
 		# only limit to 13 characters for isbn13
-		if len(isbn) > 13:
+		if len(isbn) > 12:
 			isbn.pop(-1)
 
 
@@ -132,5 +141,5 @@ def barcode_scan(path: str):
 
 
 # test
-gpio_setup(rows, columns)
-keypad_input()
+# gpio_setup(rows, columns)
+# keypad_input()
