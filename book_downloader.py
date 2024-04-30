@@ -1,18 +1,26 @@
-'''
-Downloads books from libgen.li and library.lol
-----------------------------------------------
-1) enter ISBN
-2) with ISBN, parses through annas-archive.org for available downloads
-3) finds and downloads the book
-'''
+"""
+Downloads books from libgen.li and library.lol.
 
+With a ISBN, parses through annas-archive.org for available downloads.
+"""
 import requests
 # from tqdm import tqdm
-# TODO progress bar
+# TODO : progress bar
 
 
 def isbn_info(isbn: str):
-	# returns books title for given isbn and cover image (binary)
+	"""uses openlibrary's api to obtain a books title and cover image with an ISBN.
+
+	Args:
+		isbn: 10 or 13 character string representing the ISBN.
+
+	Returns:
+		book_title: string representing the title of the book.
+		book_cover_url: string representing the book's cover image url.
+
+	Raises:
+		error if not able to connect to openlibrary's api.
+	"""
 	book_title = ''
 	url = 'http://openlibrary.org/api/volumes/brief/isbn/'
 
@@ -21,7 +29,7 @@ def isbn_info(isbn: str):
 		response.raise_for_status()  # Raise an exception for bad status codes
 		book_info = response.json()
 
-		# filter through API's JSON data to obtain book title
+		# filter through api's JSON data to obtain book title
 		book_dict = book_info['records']
 		for key, value in book_dict.items():
 			book_dict = value['data']
@@ -29,7 +37,7 @@ def isbn_info(isbn: str):
 				if key == 'title':
 					book_title = value
 
-			# filter through JSON to obtain book cover url
+			# filter through api's JSON to obtain book cover url
 			for key, value in book_dict.items():
 				if key == 'cover':
 					for key, value in value.items():
@@ -43,7 +51,16 @@ def isbn_info(isbn: str):
 		return None
 
 
-def download_book_cover(book_title, book_cover_url):
+def download_book_cover(book_title: str, book_cover_url: str):
+	"""Downloads book cover image from openlibrary.
+
+	Args:
+		book_title: string representing the title of the book.
+		book_cover_url: string representing the book's cover image url.
+
+	Raises:
+		error if not able to connect to openlibrary's api.
+	"""
 	try:
 		response = requests.get(book_cover_url, stream=True)
 		response.raise_for_status()  # Raise an exception for bad status codes
@@ -63,7 +80,17 @@ def download_book_cover(book_title, book_cover_url):
 
 
 def download_anna_html(isbn: str):
-	# detect if user entered ISBN 10 or 13
+	"""downloads html file from annas-archive.org for given ISBN.
+
+	Args:
+		isbn: 10 or 13 character string representing the ISBN number.
+
+	Returns:
+		response.text: string representing the html file.
+
+	Raises:
+		error if not able to connect to anna's archive.
+	"""
 	if len(isbn) == 13:
 		url = 'https://annas-archive.org/search?q="isbn13:'
 	else:
@@ -79,6 +106,16 @@ def download_anna_html(isbn: str):
 
 
 def parse_anna_html(html_content: str):
+	"""Searches through Anna's Archive html file for file hashes.
+
+	Anna's Archive uses md5 hashes to label and organize books aka a book's URL on Anna's Archive.
+
+	Args:
+		html_content: string representing the html content.
+
+	Returns:
+		hashes: list of strings containing md5 hashes of books.
+	"""
 	hashes = []
 	hash_id = 'href="/md5/'
 	html_content_strings = html_content.split()
@@ -91,16 +128,27 @@ def parse_anna_html(html_content: str):
 			string = string.split('"')
 			string = string[0]
 			hashes.append(string)
-	hashes = hashes[:25] # limit to 25 file hashes
+	hashes = hashes[:25]  # limit to 25 file hashes
 
 	return hashes
 
 
 def parse_anna_hashes(hashes: list):
+	"""Searches through each book hash html file for available downloads.
+
+	Args:
+		hashes: list of strings containing md5 hashes of books.
+
+	Returns:
+		provider: string representing the book's download provider.
+		hsh: string representing the book's hash.
+		file_type: string representing the book's file type.'
+	"""
 	libgen_hashes = []
 	libraryLOL_hashes = []
 	file_type = ''
 	file_extensions = ['.mobi', '.epub', '.pdf', '.lit', '.azw3', '.txt', '.cbz']
+	provider = ''
 	libgen = 'http://libgen.li/ads.php?md5='
 	libraryLOL = 'http://library.lol'
 
@@ -124,15 +172,28 @@ def parse_anna_hashes(hashes: list):
 
 		# provide the first file hash with a download option
 		if hsh in libgen_hashes:
-			return 'libgen', hsh, file_type
+			provider = 'libgen'
+			return provider, hsh, file_type
 
 		elif hsh in libraryLOL_hashes:
-			return 'libraryLOL', hsh, file_type
+			provider = 'libraryLOL'
+			return provider, hsh, file_type
 
 	return None, None, None
 
 
 def download_libgen_html(hsh: str):
+	"""Downloads html file from libgen.li for given book file hsh.
+
+	Args:
+		hsh: string representing the book's hash.
+
+	Returns:
+		response.text: string representing the html file.
+
+	Raises:
+		error if not able to connect to libgen.li.
+	"""
 	url = 'http://libgen.li/ads.php?md5='
 
 	try:
@@ -145,6 +206,16 @@ def download_libgen_html(hsh: str):
 
 
 def parse_libgen_html(html_content: str):
+	"""Searches through libgen.li html file for download key.
+
+	libgen.li requires a unique generated key and the book's hash to download the book.
+
+	Args:
+		html_content: string representing the html content.
+
+	Returns:
+		key: string representing the unique download key
+	"""
 	key_id = '&key='
 	key = ''
 	html_content_list = html_content.split()
@@ -161,6 +232,20 @@ def parse_libgen_html(html_content: str):
 
 
 def download_libgen_book(book_title, file_type, hsh, key):
+	"""Downloads the book from libgen.li using the book's file hash and key.
+
+	book_title and file_type are required to properly name the download file.
+	headers is required due to libgen.li blocking bots, a fake user-agent string bypasses this
+
+	Args:
+		book_title: string representing the book's title.
+		file_type: string representing the book's file type.
+		hsh: string representing the book's hash.
+		key: string representing the unique download key.
+
+	Raises:
+		error if not able to connect to libgen.li.
+	"""
 	url = 'http://libgen.li/get.php?md5=' + hsh + '&key=' + key
 	print(f'download url : {url}')
 	headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'}
@@ -184,6 +269,17 @@ def download_libgen_book(book_title, file_type, hsh, key):
 
 
 def download_libraryLOL_html(hsh):
+	"""Downloads html file from library.lol for given book file hsh.
+
+	Args:
+		hsh: string representing the book's hash.
+
+	Returns:
+		response.text: string representing the html file.
+
+	Raises:
+		error if not able to connect to library.lol
+	"""
 	response = requests.get('https://annas-archive.org/md5/' + hsh)
 	html_content = response.text
 	html_content_lines = html_content.split('\n')
@@ -208,6 +304,18 @@ def download_libraryLOL_html(hsh):
 
 
 def download_libraryLOL_book(book_title, file_type, html_content):
+	"""Downloads the book from library.lol.
+
+	book_title and file_type are required to properly name the download file.
+
+	Args:
+		book_title: string representing the book's title.
+		file_type: string representing the book's file type.
+		html_content: string representing the html content.
+
+	Raises:
+		error if not able to connect to library.lol
+	"""
 	url = ''
 
 	# filter through strings to obtain download link
@@ -238,6 +346,12 @@ def download_libraryLOL_book(book_title, file_type, html_content):
 
 
 def download_book(isbn, book_title):
+	"""Combination of html downloading and parsing functions in this module to download a book.
+
+	Args:
+		isbn: string representing the ISBN of the book.
+		book_title: string representing the book's title.
+	"""
 	anna_html = download_anna_html(isbn)
 	hashes = parse_anna_html(anna_html)
 	provider, valid_hash, file_type = parse_anna_hashes(hashes)
@@ -252,4 +366,5 @@ def download_book(isbn, book_title):
 		download_libraryLOL_book(book_title, file_type, libraryLOL_html)
 
 	else:
+		# TODO : return a value so LCD can show no downloads available
 		print('no provider found')
