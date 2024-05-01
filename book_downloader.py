@@ -2,7 +2,6 @@
 Downloads books from libgen.li and library.lol.
 
 With a ISBN, parses through annas-archive.org for available downloads.
-Assumes environment variable WEB_SERVER_DIR and WEB_SERVER_DIR_IMGS is set to desired download directory.
 """
 import requests
 # from tqdm import tqdm
