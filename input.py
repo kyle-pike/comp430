@@ -13,6 +13,10 @@ from display import *
 import evdev
 
 
+# pin setup for the keypad's rows and columns
+rows = [4, 17, 27, 5]
+columns = [6, 26, 20, 16]
+
 
 def gpio_setup(rows: list, columns: list):
 	"""Configures row and column pins on GPIO.
@@ -84,7 +88,7 @@ def keypad_input(rows: list, columns: list):
 	If pressed key is '*', stop immediately.
 
 	Returns:
-		isbn: 10 or 13 character string representing an ISBN
+		formatted_isbn: 10 or 13 character string representing an ISBN
 	"""
 	isbn = []
 	while True:
@@ -93,29 +97,33 @@ def keypad_input(rows: list, columns: list):
 		if type(key) is int:
 			isbn.append(str(key))
 			formatted_isbn = ''.join(isbn)
-			lcd_string(f'{formatted_isbn}', LCD_LINE_1)
+			lcd_string(f'{formatted_isbn}', LCD_LINE_2)
+
+		# 'B' is the "done inputting ISBNs key"
+		elif key == 'B':
+			return False
 
 		# 'D' is the delete key
 		elif key == 'D':
 			isbn.pop(-1)
 			formatted_isbn = ''.join(isbn)
-			lcd_string(f'{formatted_isbn}', LCD_LINE_1)
+			lcd_string(f'{formatted_isbn}', LCD_LINE_2)
 
-		# hashtag is the submit key
+		# '#' is the submit key
 		elif key == '#':
-
 			if len(isbn) >= 10:
 				for number in isbn:
 					formatted_isbn = ''.join(isbn)
 				lcd_string(f'submitted ISBN:', LCD_LINE_1)
 				lcd_string(f'{formatted_isbn}', LCD_LINE_2)
+				time.sleep(3)
 				return formatted_isbn
-
 			elif len(isbn) < 10:
 				lcd_string(f'ISBNS are 10/13', LCD_LINE_1)
 
 		# '*' is the stop key
 		elif key == '*':
+			lcd_string(f'use scanner now', LCD_LINE_1)
 			return None
 
 		sleep(.3)
@@ -176,4 +184,55 @@ def scanner_input(barcode_scanner_path: str):
 				number = key_event.keycode[4:]
 				isbn += number
 			elif key_event.keycode == 'KEY_ENTER':
+				lcd_string(f'submitted ISBN:', LCD_LINE_1)
+				lcd_string(f'{isbn}', LCD_LINE_2)
+				time.sleep(3)
 				return isbn
+
+
+def isbns_input():
+	"""Takes user input via barcode scanner and keypad scanner and returns ISBNs.
+
+	Status of isbn input is displayed to user on LCD.
+	Notifies via LCD if the scanner is unplugged.
+
+	Returns:
+		list of strings representing ISBNs.
+	"""
+	gpio_setup(rows, columns)
+	inputting = True
+
+	isbns = []
+	while inputting is True:
+		# LCD prompts user to enter ISBN
+		# TODO : move into input.py functions?
+		lcd_init()
+		lcd_string('Enter ISBN', LCD_LINE_1)
+
+		# do not continue if barcode scanner is not plugged in
+		barcode_scanner_path = scanner_setup()
+		while barcode_scanner_path is None:
+			barcode_scanner_path = scanner_setup()
+			lcd_string(f'scanner unpluggd', LCD_LINE_1)
+
+		# init LCD after barcode scanner is plugged in
+		lcd_init()
+		lcd_string('Enter ISBN', LCD_LINE_1)
+
+		# user enters input via keypad
+		keypad_output = keypad_input(rows, columns)
+		if isinstance(keypad_output, str):
+			isbns.append(keypad_output)
+
+		# press '*' on keypad to use scanner
+		elif keypad_output is None:
+			scanner_output = scanner_input(barcode_scanner_path)
+			isbns.append(scanner_output)
+
+		# press 'B' to stop inputting ISBNs
+		elif keypad_output is False:
+			lcd_string(f'requesting DLs', LCD_LINE_1)
+			lcd_string(f'for ISBNs', LCD_LINE_2)
+			inputting = False
+
+	return isbns

@@ -1,0 +1,4 @@
+requests
+RPi.GPIO
+smbus
+evdev
