@@ -49,7 +49,7 @@ def isbn_info(isbn: str):
 
 	except requests.exceptions.RequestException as error:
 		print(f'Error connecting to openlibrary.org : {error}')
-		return None
+		return None, None
 
 
 def download_book_cover(book_title: str, book_cover_url: str):
