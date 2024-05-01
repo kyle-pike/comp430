@@ -13,6 +13,7 @@ from display import *
 import evdev
 
 
+
 def gpio_setup(rows: list, columns: list):
 	"""Configures row and column pins on GPIO.
 
@@ -124,22 +125,55 @@ def keypad_input(rows: list, columns: list):
 			isbn.pop(-1)
 
 
-#TODO obtain scanner input path
+def scanner_setup():
+	"""setups the USB barcode scanner (Busicom BC-BR900L-B).
 
-def barcode_scan(path: str):
-	dev = InputDevice('/dev/input/event0')
-	barcode = ''
-	for event in dev.read_loop():
-		if event.type == ecodes.EV_KEY:
-			key_event = categorize(event)
-			if key_event.keystate == key_event.key_up:
-				if key_event.keycode == 'KEY_ENTER':
-					print("Scanned barcode:", barcode)
-					barcode = ''
-				else:
-					barcode += key_event.keycode[4:]
+	The linux kernel does not support this barcode scanner as a keyboard.
+	As such, the evdev library must be used to take the direct input.
+	This detects the barcode scanner's input path using evdev.
+	With the input path, the device input can be read.
+
+	Returns:
+		barcode_scanner: str representing the barcode scanner's input path.
+	"""
+	devices = []
+
+	for device in evdev.list_devices():
+		evdev_device = evdev.InputDevice(device)
+		devices.append(evdev_device)
 
 
-# test
-# gpio_setup(rows, columns)
-# keypad_input()
+	for device in devices:
+		if 'Future' in device.name:
+			barcode_scanner_path = device.path
+			return barcode_scanner_path
+
+
+def scanner_input(barcode_scanner_path: str):
+	"""Reads the barcode scanner's events, filters for simulated key presses and obtains their value to form an ISBN.
+
+	The scanner's events simulate pressing and releasing a keyboard key.
+	The evdev library allows filtering through these events to only obtain keyboard events (key events).
+	Since a key press has two events, push and release, this function filters only for key pushes.
+
+	Args:
+		barcode_scanner_path: str representing the barcode scanner's input path.
+
+	Returns:
+		isbn: 10 or 13 character string representing an ISBN.
+	"""
+	barcode_scanner = evdev.InputDevice(barcode_scanner_path)
+	isbn = ''
+
+	for event in barcode_scanner.read_loop():
+		# if the event is a key event (ex: a key press)
+		if event.type == evdev.ecodes.EV_KEY:
+			# evdev.categorize() provides the key value and state
+			key_event = evdev.categorize(event)
+			# if the key_event is a key being "pressed down" and not the enter key
+			# then slice string to obtain value
+			if key_event.keystate == key_event.key_down and key_event.keycode != 'KEY_ENTER':
+				number = key_event.keycode[4:]
+				isbn += number
+			elif key_event.keycode == 'KEY_ENTER':
+				return isbn
