@@ -62,7 +62,7 @@ def download_book_cover(book_title: str, book_cover_url: str):
 	Raises:
 		error if not able to connect to openlibrary's api.
 	"""
-	download_dir = ('web_server/imgs/')
+	download_dir = ('imgs/')
 
 	try:
 		response = requests.get(book_cover_url, stream=True)
@@ -250,7 +250,7 @@ def download_libgen_book(book_title: str, file_type: str, hsh: str, key: str):
 	Raises:
 		error if not able to connect to libgen.li.
 	"""
-	download_dir = 'web_server/books/'
+	download_dir = 'books/'
 
 	url = 'http://libgen.li/get.php?md5=' + hsh + '&key=' + key
 	print(f'download url : {url}')
@@ -322,7 +322,7 @@ def download_libraryLOL_book(book_title: str, file_type: str, html_content: str)
 	Raises:
 		error if not able to connect to library.lol
 	"""
-	download_dir = 'web_server/books/'
+	download_dir = 'books/'
 	url = ''
 
 	# filter through strings to obtain download link
@@ -359,7 +359,7 @@ def download_book(book_title: str, isbn: str):
 		isbn: string representing the ISBN of the book.
 		book_title: string representing the book's title.
 	"""
-	download_dir = 'web_server/books/'
+	download_dir = 'books/'
 	anna_html = download_anna_html(isbn)
 	hashes = parse_anna_html(anna_html)
 	provider, valid_hash, file_type = parse_anna_hashes(hashes)

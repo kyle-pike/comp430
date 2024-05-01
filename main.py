@@ -21,7 +21,7 @@ def main():
 			book_file = download_book(book_title, isbn)
 		# STEP 3 - update html to include new books
 			if book_cover_img and book_file is not None:
-				html_file = 'web_server/index.html'
+				html_file = 'index.html'
 				update_html(html_file, book_cover_img, book_title, book_file)
 			else:
 				lcd_string(f'unable to fetch', LCD_LINE_1)
