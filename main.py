@@ -1,12 +1,13 @@
 """
 User enters ISBNs via barcode scanner or keypad, then the system downloads the books.
 
-Downloads books to relative path 'web_server/books/'.
-Downloads book covers to relative path 'web_server/imgs/'.
+Downloads books to relative path 'books/'.
+Downloads book covers to relative path 'imgs/'.
 """
 from book_downloader import *
 from input import *
 from update_html import *
+from display import *
 
 
 def main():
