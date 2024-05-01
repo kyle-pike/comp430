@@ -2,3 +2,4 @@ requests
 RPi.GPIO
 smbus
 evdev
+bs4

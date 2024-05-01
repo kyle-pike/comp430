@@ -2,6 +2,7 @@
 Downloads books from libgen.li and library.lol.
 
 With a ISBN, parses through annas-archive.org for available downloads.
+Assumes environment variable WEB_SERVER_DIR and WEB_SERVER_DIR_IMGS is set to desired download directory.
 """
 import requests
 # from tqdm import tqdm
@@ -61,6 +62,8 @@ def download_book_cover(book_title: str, book_cover_url: str):
 	Raises:
 		error if not able to connect to openlibrary's api.
 	"""
+	download_dir = ('web_server/imgs/')
+
 	try:
 		response = requests.get(book_cover_url, stream=True)
 		response.raise_for_status()  # Raise an exception for bad status codes
@@ -68,9 +71,10 @@ def download_book_cover(book_title: str, book_cover_url: str):
 		if response.status_code == 200:
 			print(f'connected to url')
 
-			with open(book_title + '.jpg', 'wb') as file:
+			with open(download_dir + book_title + '.jpg', 'wb') as file:
 				file.write(response.content)
 			print(f'{book_title} downloaded')
+			return download_dir + book_title + '.jpg'
 
 		else:
 			print(f'Failed to download book cover : {response.status_code}')
@@ -246,6 +250,8 @@ def download_libgen_book(book_title: str, file_type: str, hsh: str, key: str):
 	Raises:
 		error if not able to connect to libgen.li.
 	"""
+	download_dir = 'web_server/books/'
+
 	url = 'http://libgen.li/get.php?md5=' + hsh + '&key=' + key
 	print(f'download url : {url}')
 	headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'}
@@ -257,7 +263,7 @@ def download_libgen_book(book_title: str, file_type: str, hsh: str, key: str):
 		if response.status_code == 200:
 			print(f'connected to url')
 
-			with open(book_title + file_type, 'wb') as file:
+			with open(download_dir + book_title + file_type, 'wb') as file:
 				file.write(response.content)
 			print(f'{book_title} downloaded')
 
@@ -316,6 +322,7 @@ def download_libraryLOL_book(book_title: str, file_type: str, html_content: str)
 	Raises:
 		error if not able to connect to library.lol
 	"""
+	download_dir = 'web_server/books/'
 	url = ''
 
 	# filter through strings to obtain download link
@@ -334,7 +341,7 @@ def download_libraryLOL_book(book_title: str, file_type: str, html_content: str)
 		if response.status_code == 200:
 			print('connected to url')
 
-			with open(book_title + file_type, 'wb') as file:
+			with open(download_dir + book_title + file_type, 'wb') as file:
 				file.write(response.content)
 			print(f'{book_title} downloaded')
 
@@ -352,6 +359,7 @@ def download_book(book_title: str, isbn: str):
 		isbn: string representing the ISBN of the book.
 		book_title: string representing the book's title.
 	"""
+	download_dir = 'web_server/books/'
 	anna_html = download_anna_html(isbn)
 	hashes = parse_anna_html(anna_html)
 	provider, valid_hash, file_type = parse_anna_hashes(hashes)
@@ -360,11 +368,12 @@ def download_book(book_title: str, isbn: str):
 		libgen_html = download_libgen_html(valid_hash)
 		key = parse_libgen_html(libgen_html)
 		download_libgen_book(book_title, file_type, valid_hash, key)
+		return download_dir + book_title + file_type
 
 	elif provider == 'libraryLOL':
 		libraryLOL_html = download_libraryLOL_html(valid_hash)
 		download_libraryLOL_book(book_title, file_type, libraryLOL_html)
+		return download_dir + book_title + file_type
 
 	else:
-		# TODO : return a value so LCD can show no downloads available
 		print('no provider found')

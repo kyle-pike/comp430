@@ -1,6 +1,10 @@
+"""
+Updates html file to display downloaded books and their covers.
+"""
 from bs4 import BeautifulSoup
 
-def add_cover_and_title(html_file, cover_path, title, link):
+
+def update_html(html_file, cover_path, title, link):
 	# Default width and height for the image
 	width = "50"
 	height = "60"
@@ -37,5 +41,6 @@ def add_cover_and_title(html_file, cover_path, title, link):
 	with open(html_file, "w") as file:
 		file.write(str(library))
 
+
 # Example usage:
-add_cover_and_title("library.html", "imgs/test.jpg", "Book Title", "https://example.com/book")
+# add_cover_and_title("library.html", "imgs/test.jpg", "Book Title", "https://example.com/book")
