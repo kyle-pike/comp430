@@ -6,7 +6,7 @@ Downloads book covers to relative path 'web_server/imgs/'.
 """
 from book_downloader import *
 from input import *
-from html import *
+from update_html import *
 
 
 def main():
@@ -28,10 +28,10 @@ def main():
 				lcd_string(f'{isbn}', LCD_LINE_2)
 	# TODO : restart web server after?
 	# STEP 4 - LCD provides url when finished downloading
-	# 	lcd_init()
-	# 	lcd_string('download books', LCD_LINE_1)
-	# 	lcd_string(f'via {url}', LCD_LINE_2)
-	# 	time.sleep(5)
+		lcd_init()
+		lcd_string('download books', LCD_LINE_1)
+		lcd_string(f'via url', LCD_LINE_2)
+		time.sleep(5)
 
 
 if __name__ == '__main__':
