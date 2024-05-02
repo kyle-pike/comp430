@@ -129,7 +129,7 @@ def keypad_input(rows: list, columns: list):
 		sleep(.3)
 
 		# only limit to 13 characters for isbn13
-		if len(isbn) > 12:
+		if len(isbn) > 13:
 			isbn.pop(-1)
 
 
