@@ -4,6 +4,7 @@
     <img src="imgs/barcode-scanner.png" alt='scanner' height=100px>
     <img src="imgs/keypad.png" alt='keypad' height=100px>
 </div>
+
 ### User enters ISBN(s) via usb barcode scanner or GPIO controlled 4x4 keypad, then a configured RPI 3B downloads the books and hosts the files on a web server. ###
 
 #### STEP 1 - Enter ISBN(s) via keypad or scanner ####
