@@ -1,11 +1,11 @@
 """
-Configures a RPI 3B to use a GPIO controlled 4x4 matrix keypad and a USB barcode scanner.
+Configures an RPI 3B to use a GPIO controlled 4x4 matrix keypad and a USB barcode scanner.
 
 The 4x4 matrix keypad is controlled with 8 GPIO pins.
 Starting from the left on the keypad's cables, the first 4 cables are rows, while the last 4 cables are columns.
 
 The USB barcode scanner (Busicom BC-BR900L-B) requires the evdev library.
-This is due to the linux kernel evdev module only detecting the scanner as a generic input device.
+This is due to the Version 6.6 linux kernel evdev module only detecting the scanner as a generic input device.
 """
 import RPi.GPIO as GPIO
 from time import sleep
@@ -19,10 +19,10 @@ columns = [6, 26, 20, 16]
 
 
 def gpio_setup(rows: list, columns: list):
-	"""Configures row and column pins on GPIO.
+	"""Configures GPIO for keypad row and column pins.
 
 	Rows are setup as output and high.
-	Columns are setup as input pins utilizing the internal pull-up resistor.
+	Columns are setup as input and utilize the internal pull-up resistor.
 	The broadcom mode is utilized; this code assumes the physical setup uses the pi wedge.
 
 	Args:
@@ -79,9 +79,9 @@ def keypad_scan(rows: list, columns: list):
 	return None
 
 
-# TODO : detect if keypad is disconnected
 def keypad_input(rows: list, columns: list):
-	"""responds to keypad presses depending on key, and displays active status to LCD.
+	"""Responds to keypad presses depending on key, and displays active status to LCD.
+
 	If pressed key is an integer, add to the list isbn.
 	If pressed key is 'D', "delete" the last integer from the list isbn.
 	If pressed key is '#', filter to ensure 10/13 characters then return the ISBN.
@@ -111,14 +111,14 @@ def keypad_input(rows: list, columns: list):
 
 		# '#' is the submit key
 		elif key == '#':
-			if len(isbn) >= 10:
+			if len(isbn) in [10, 13]:
 				for number in isbn:
 					formatted_isbn = ''.join(isbn)
 				lcd_string(f'submitted ISBN:', LCD_LINE_1)
 				lcd_string(f'{formatted_isbn}', LCD_LINE_2)
 				time.sleep(3)
 				return formatted_isbn
-			elif len(isbn) < 10:
+			else:
 				lcd_string(f'ISBNS are 10/13', LCD_LINE_1)
 
 		# '*' is the stop key
@@ -126,7 +126,8 @@ def keypad_input(rows: list, columns: list):
 			lcd_string(f'use scanner now', LCD_LINE_1)
 			return None
 
-		sleep(.3)
+		# give time for user to release the key
+		time.sleep(.3)
 
 		# only limit to 13 characters for isbn13
 		if len(isbn) > 13:
@@ -136,7 +137,8 @@ def keypad_input(rows: list, columns: list):
 def scanner_setup():
 	"""setups the USB barcode scanner (Busicom BC-BR900L-B).
 
-	The linux kernel does not support this barcode scanner as a keyboard.
+	Version 6.6 of the linux kernel evdev module does not
+	support this barcode scanner as a keyboard.
 	As such, the evdev library must be used to take the direct input.
 	This detects the barcode scanner's input path using evdev.
 	With the input path, the device input can be read.
@@ -191,7 +193,7 @@ def scanner_input(barcode_scanner_path: str):
 
 
 def isbns_input():
-	"""Takes user input via barcode scanner and keypad scanner and returns ISBNs.
+	"""Takes user input via keypad and/or barcode scanner and returns ISBNs.
 
 	Status of isbn input is displayed to user on LCD.
 	Notifies via LCD if the scanner is unplugged.
@@ -205,7 +207,6 @@ def isbns_input():
 	isbns = []
 	while inputting is True:
 		# LCD prompts user to enter ISBN
-		# TODO : move into input.py functions?
 		lcd_init()
 		lcd_string('Enter ISBN', LCD_LINE_1)
 

@@ -1,5 +1,9 @@
+"""
+Easily display desired characters on i2c controlled LCD.
+"""
 import RPi.GPIO as GPIO
-import time, smbus
+import time
+import smbus
 
 # LCD pin assignments, constants, etc
 I2C_ADDR = 0x27  # I2C device address

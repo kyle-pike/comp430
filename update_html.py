@@ -5,6 +5,14 @@ from bs4 import BeautifulSoup
 
 
 def update_html(html_file, cover_path, title, link):
+	"""Updates html file to display downloaded books, their covers, and file path.
+
+	Args:
+		html_file: str representing the html file.
+		cover_path: str representing the cover's image path.
+		title: str representing the book's title.
+		link: str representing the book's file path.
+	"""
 	# Default width and height for the image
 	width = "50"
 	height = "60"
@@ -40,7 +48,3 @@ def update_html(html_file, cover_path, title, link):
 	# Write the modified HTML content back to the file
 	with open(html_file, "w") as file:
 		file.write(str(library))
-
-
-# Example usage:
-# add_cover_and_title("library.html", "imgs/test.jpg", "Book Title", "https://example.com/book")

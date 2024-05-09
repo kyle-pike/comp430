@@ -4,8 +4,6 @@ Downloads books from libgen.li and library.lol.
 With a ISBN, parses through annas-archive.org for available downloads.
 """
 import requests
-# from tqdm import tqdm
-# TODO : progress bar
 
 
 def isbn_info(isbn: str):
@@ -29,22 +27,27 @@ def isbn_info(isbn: str):
 		response.raise_for_status()  # Raise an exception for bad status codes
 		book_info = response.json()
 
-		# filter through api's JSON data to obtain book title
-		book_dict = book_info['records']
-		for key, value in book_dict.items():
-			book_dict = value['data']
+		if not isinstance(book_info, list):
+			# filter through api's JSON data to obtain book title
+			book_dict = book_info['records']
 			for key, value in book_dict.items():
-				if key == 'title':
-					book_title = value
+				book_dict = value['data']
+				for key, value in book_dict.items():
+					if key == 'title':
+						book_title = value
 
-			# filter through api's JSON to obtain book cover url
-			for key, value in book_dict.items():
-				if key == 'cover':
-					for key, value in value.items():
-						if key == 'large':
-							book_cover_url = value
+				# filter through api's JSON to obtain book cover url
+				for key, value in book_dict.items():
+					if key == 'cover':
+						for key, value in value.items():
+							if key == 'large':
+								book_cover_url = value
 
-		return book_title, book_cover_url
+			return book_title, book_cover_url
+
+		else:
+			print(f'{isbn} does not appear to be a valid ISBN')
+			return False, False
 
 	except requests.exceptions.RequestException as error:
 		print(f'Error connecting to openlibrary.org : {error}')
@@ -69,7 +72,6 @@ def download_book_cover(book_title: str, book_cover_url: str):
 
 		if response.status_code == 200:
 			print(f'connected to url')
-
 			with open(download_dir + book_title + '.jpg', 'wb') as file:
 				file.write(response.content)
 			print(f'{book_title} downloaded')
@@ -103,9 +105,9 @@ def download_anna_html(isbn: str):
 		response = requests.get(url + isbn)
 		response.raise_for_status()  # Raise an exception for bad status codes
 		return response.text  # Return the HTML content
+
 	except requests.exceptions.RequestException as error:
 		print(f'Error connecting to annas-archive.org : {error}')
-		return None
 
 
 def parse_anna_html(html_content: str):
@@ -203,9 +205,9 @@ def download_libgen_html(hsh: str):
 		response = requests.get(url + hsh)
 		response.raise_for_status()
 		return response.text
+
 	except requests.exceptions.RequestException as error:
 		print(f'Error connecting to libgen.li : {error}')
-		return None
 
 
 def parse_libgen_html(html_content: str):
@@ -261,10 +263,10 @@ def download_libgen_book(book_title: str, file_type: str, hsh: str, key: str):
 
 		if response.status_code == 200:
 			print(f'connected to url')
-
 			with open(download_dir + book_title + file_type, 'wb') as file:
 				file.write(response.content)
 			print(f'{book_title} downloaded')
+			return True
 
 		else:
 			print(f'Failed to download from libgen : {response.status_code}')
@@ -303,9 +305,9 @@ def download_libraryLOL_html(hsh: str):
 		response = requests.get(download_url)
 		response.raise_for_status()
 		return response.text
+
 	except requests.exceptions.RequestException as error:
 		print(f'Error connecting to library.lol : {error}')
-		return None
 
 
 def download_libraryLOL_book(book_title: str, file_type: str, html_content: str):
@@ -339,10 +341,10 @@ def download_libraryLOL_book(book_title: str, file_type: str, html_content: str)
 
 		if response.status_code == 200:
 			print('connected to url')
-
 			with open(download_dir + book_title + file_type, 'wb') as file:
 				file.write(response.content)
 			print(f'{book_title} downloaded')
+			return True
 
 		else:
 			print(f'Failed to download from library.lol : {response.status_code}')
@@ -357,6 +359,9 @@ def download_book(book_title: str, isbn: str):
 	Args:
 		isbn: string representing the ISBN of the book.
 		book_title: string representing the book's title.
+
+	Returns:
+		string representing the book file path.
 	"""
 	download_dir = 'books/'
 	anna_html = download_anna_html(isbn)
@@ -366,13 +371,13 @@ def download_book(book_title: str, isbn: str):
 	if provider == 'libgen':
 		libgen_html = download_libgen_html(valid_hash)
 		key = parse_libgen_html(libgen_html)
-		download_libgen_book(book_title, file_type, valid_hash, key)
-		return download_dir + book_title + file_type
+		if download_libgen_book(book_title, file_type, valid_hash, key) is True:
+			return download_dir + book_title + file_type
 
 	elif provider == 'libraryLOL':
 		libraryLOL_html = download_libraryLOL_html(valid_hash)
-		download_libraryLOL_book(book_title, file_type, libraryLOL_html)
-		return download_dir + book_title + file_type
+		if download_libraryLOL_book(book_title, file_type, libraryLOL_html) is True:
+			return download_dir + book_title + file_type
 
 	else:
 		print('no provider found')
