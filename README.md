@@ -1,14 +1,9 @@
-# RPI 3B book downloader #
+# RPI 3B Digital Library #
 
 <div style="text-align:center">
-    <img src="imgs/barcode-scanner.png" height=50px>
-    <img src="imgs/keypad.png" height=50px>
+    <img src="imgs/barcode-scanner.png" alt='scanner' height=100px>
+    <img src="imgs/keypad.png" alt='keypad' height=100px>
 </div>
-
-<div style="text-align:center">
-    <img src="imgs/stack-of-books.png" height=50px>
-</div>
-
 ### User enters ISBN(s) via usb barcode scanner or GPIO controlled 4x4 keypad, then a configured RPI 3B downloads the books and hosts the files on a web server. ###
 
 #### STEP 1 - Enter ISBN(s) via keypad or scanner ####
@@ -18,7 +13,7 @@
 #### STEP 3 - Update html to include new books ####
 
 ## Diagram ##
-<img src=imgs/diagram.png>
+<img src='imgs/diagram.png' alt="fritzing diagram">
 
 <a href="https://www.flaticon.com/free-icons/books" title="books icons">Books icons created by popo2021 - Flaticon</a>
 <br>
